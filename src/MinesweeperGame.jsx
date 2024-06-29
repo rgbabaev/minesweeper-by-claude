@@ -168,7 +168,8 @@ const MinesweeperGame = () => {
         currX >= GRID_SIZE ||
         currY < 0 ||
         currY >= GRID_SIZE ||
-        newRevealed[currX][currY]
+        newRevealed[currX][currY] ||
+        gameState.flagged[currX][currY]
       )
         continue;
 
@@ -237,6 +238,7 @@ const MinesweeperGame = () => {
     if (event.button === 2) {
       // Right click
       setGameState((prev) => {
+        if (prev.revealed[x][y]) return prev; // Can't flag revealed cells
         const newFlagged = prev.flagged.map((row) => [...row]);
         newFlagged[x][y] = !newFlagged[x][y];
         return { ...prev, flagged: newFlagged };
