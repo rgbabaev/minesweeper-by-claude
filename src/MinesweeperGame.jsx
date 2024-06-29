@@ -119,9 +119,12 @@ const MinesweeperGame = () => {
     }
   }
 
-  function revealCells(x, y) {
+  function revealCells(
+    x,
+    y,
+    newRevealed = gameState.revealed.map((row) => [...row])
+  ) {
     const stack = [[x, y]];
-    const newRevealed = gameState.revealed.map((row) => [...row]);
 
     while (stack.length > 0) {
       const [currX, currY] = stack.pop();
@@ -149,6 +152,46 @@ const MinesweeperGame = () => {
     return newRevealed;
   }
 
+  function chordAction(x, y) {
+    const cell = gameState.grid[x][y];
+    if (cell <= 0 || !gameState.revealed[x][y]) return gameState.revealed;
+
+    let flagCount = 0;
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        if (
+          x + i >= 0 &&
+          x + i < GRID_SIZE &&
+          y + j >= 0 &&
+          y + j < GRID_SIZE
+        ) {
+          if (gameState.flagged[x + i][y + j]) flagCount++;
+        }
+      }
+    }
+
+    if (flagCount === cell) {
+      let newRevealed = gameState.revealed.map((row) => [...row]);
+      for (let i = -1; i <= 1; i++) {
+        for (let j = -1; j <= 1; j++) {
+          if (
+            x + i >= 0 &&
+            x + i < GRID_SIZE &&
+            y + j >= 0 &&
+            y + j < GRID_SIZE
+          ) {
+            if (!gameState.flagged[x + i][y + j]) {
+              newRevealed = revealCells(x + i, y + j, newRevealed);
+            }
+          }
+        }
+      }
+      return newRevealed;
+    }
+
+    return gameState.revealed;
+  }
+
   function handleClick(event) {
     event.preventDefault();
     if (gameState.gameOver) return;
@@ -169,9 +212,18 @@ const MinesweeperGame = () => {
       if (gameState.flagged[x][y]) return; // Can't reveal flagged cells
 
       setGameState((prev) => {
-        const newRevealed = revealCells(x, y);
+        let newRevealed;
+        if (prev.revealed[x][y]) {
+          newRevealed = chordAction(x, y);
+        } else {
+          newRevealed = revealCells(x, y);
+        }
 
-        if (prev.grid[x][y] === -1) {
+        if (
+          newRevealed.some((row, i) =>
+            row.some((cell, j) => cell && prev.grid[i][j] === -1)
+          )
+        ) {
           return { ...prev, revealed: newRevealed, gameOver: true };
         }
 
