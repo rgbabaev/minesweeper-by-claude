@@ -2,18 +2,19 @@ import React, { useEffect, useRef, useState } from 'react';
 
 const MinesweeperGame = () => {
   const canvasRef = useRef(null);
-  const [gameState, setGameState] = useState(() => {
-    const grid = Array(10)
+  const [gameState, setGameState] = useState(() => ({
+    grid: Array(10)
       .fill()
-      .map(() => Array(10).fill(0));
-    const revealed = Array(10)
+      .map(() => Array(10).fill(0)),
+    revealed: Array(10)
       .fill()
-      .map(() => Array(10).fill(false));
-    const flagged = Array(10)
+      .map(() => Array(10).fill(false)),
+    flagged: Array(10)
       .fill()
-      .map(() => Array(10).fill(false));
-    return { grid, revealed, flagged, gameOver: false };
-  });
+      .map(() => Array(10).fill(false)),
+    gameOver: false,
+    isFirstClick: true,
+  }));
 
   const GRID_SIZE = 10;
   const CELL_SIZE = 30;
@@ -40,43 +41,40 @@ const MinesweeperGame = () => {
   `;
 
   useEffect(() => {
-    initGrid();
-  }, []);
-
-  useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     drawGrid(ctx);
   }, [gameState]);
 
-  function initGrid() {
-    setGameState((prevState) => {
-      const newGrid = Array(GRID_SIZE)
-        .fill()
-        .map(() => Array(GRID_SIZE).fill(0));
+  function initGrid(firstClickX, firstClickY) {
+    const newGrid = Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(0));
 
-      // Place mines
-      let minesPlaced = 0;
-      while (minesPlaced < MINE_COUNT) {
-        const x = Math.floor(Math.random() * GRID_SIZE);
-        const y = Math.floor(Math.random() * GRID_SIZE);
-        if (newGrid[x][y] !== -1) {
-          newGrid[x][y] = -1;
-          minesPlaced++;
+    // Place mines
+    let minesPlaced = 0;
+    while (minesPlaced < MINE_COUNT) {
+      const x = Math.floor(Math.random() * GRID_SIZE);
+      const y = Math.floor(Math.random() * GRID_SIZE);
+      if (
+        newGrid[x][y] !== -1 &&
+        (Math.abs(x - firstClickX) > 1 || Math.abs(y - firstClickY) > 1)
+      ) {
+        newGrid[x][y] = -1;
+        minesPlaced++;
+      }
+    }
+
+    // Calculate numbers
+    for (let i = 0; i < GRID_SIZE; i++) {
+      for (let j = 0; j < GRID_SIZE; j++) {
+        if (newGrid[i][j] !== -1) {
+          newGrid[i][j] = countAdjacentMines(newGrid, i, j);
         }
       }
+    }
 
-      // Calculate numbers
-      for (let i = 0; i < GRID_SIZE; i++) {
-        for (let j = 0; j < GRID_SIZE; j++) {
-          if (newGrid[i][j] !== -1) {
-            newGrid[i][j] = countAdjacentMines(newGrid, i, j);
-          }
-        }
-      }
-
-      return { ...prevState, grid: newGrid };
-    });
+    return newGrid;
   }
 
   function countAdjacentMines(grid, x, y) {
@@ -157,7 +155,8 @@ const MinesweeperGame = () => {
   function revealCells(
     x,
     y,
-    newRevealed = gameState.revealed.map((row) => [...row])
+    newRevealed = gameState.revealed.map((row) => [...row]),
+    grid = gameState.grid
   ) {
     const stack = [[x, y]];
 
@@ -175,7 +174,7 @@ const MinesweeperGame = () => {
 
       newRevealed[currX][currY] = true;
 
-      if (gameState.grid[currX][currY] === 0) {
+      if (grid[currX][currY] === 0) {
         for (let i = -1; i <= 1; i++) {
           for (let j = -1; j <= 1; j++) {
             stack.push([currX + i, currY + j]);
@@ -247,24 +246,40 @@ const MinesweeperGame = () => {
       if (gameState.flagged[x][y]) return; // Can't reveal flagged cells
 
       setGameState((prev) => {
-        let newRevealed;
-        if (prev.revealed[x][y]) {
-          newRevealed = chordAction(x, y);
+        if (prev.isFirstClick) {
+          const newGrid = initGrid(x, y);
+          const newRevealed = revealCells(
+            x,
+            y,
+            prev.revealed.map((row) => [...row]),
+            newGrid
+          );
+          return {
+            ...prev,
+            grid: newGrid,
+            revealed: newRevealed,
+            isFirstClick: false,
+          };
         } else {
-          newRevealed = revealCells(x, y);
+          let newRevealed;
+          if (prev.revealed[x][y]) {
+            newRevealed = chordAction(x, y);
+          } else {
+            newRevealed = revealCells(x, y);
+          }
+
+          if (
+            newRevealed.some((row, i) =>
+              row.some((cell, j) => cell && prev.grid[i][j] === -1)
+            )
+          ) {
+            return { ...prev, revealed: newRevealed, gameOver: true };
+          }
+
+          const hasWon = checkWin(prev.grid, newRevealed);
+
+          return { ...prev, revealed: newRevealed, gameOver: hasWon };
         }
-
-        if (
-          newRevealed.some((row, i) =>
-            row.some((cell, j) => cell && prev.grid[i][j] === -1)
-          )
-        ) {
-          return { ...prev, revealed: newRevealed, gameOver: true };
-        }
-
-        const hasWon = checkWin(prev.grid, newRevealed);
-
-        return { ...prev, revealed: newRevealed, gameOver: hasWon };
       });
     }
   }
