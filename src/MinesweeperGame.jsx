@@ -14,11 +14,23 @@ const MinesweeperGame = () => {
       .map(() => Array(10).fill(false)),
     gameOver: false,
     isFirstClick: true,
+    timer: 0,
+    bombsLeft: 15,
   }));
 
   const GRID_SIZE = 10;
   const CELL_SIZE = 30;
   const MINE_COUNT = 15;
+
+  useEffect(() => {
+    let interval;
+    if (!gameState.isFirstClick && !gameState.gameOver) {
+      interval = setInterval(() => {
+        setGameState((prev) => ({ ...prev, timer: prev.timer + 1 }));
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [gameState.isFirstClick, gameState.gameOver]);
 
   // Flag SVG
   const flagSvg = `
@@ -241,7 +253,8 @@ const MinesweeperGame = () => {
         if (prev.revealed[x][y]) return prev; // Can't flag revealed cells
         const newFlagged = prev.flagged.map((row) => [...row]);
         newFlagged[x][y] = !newFlagged[x][y];
-        return { ...prev, flagged: newFlagged };
+        const newBombsLeft = prev.bombsLeft + (newFlagged[x][y] ? -1 : 1);
+        return { ...prev, flagged: newFlagged, bombsLeft: newBombsLeft };
       });
     } else if (event.button === 0) {
       // Left click
@@ -297,6 +310,12 @@ const MinesweeperGame = () => {
 
   return (
     <div className='flex flex-col items-center'>
+      <div className='mb-4 flex justify-between w-full'>
+        <div className='text-xl font-bold'>
+          Bombs left: {gameState.bombsLeft}
+        </div>
+        <div className='text-xl font-bold'>Time: {gameState.timer}s</div>
+      </div>
       <canvas
         ref={canvasRef}
         width={GRID_SIZE * CELL_SIZE}
