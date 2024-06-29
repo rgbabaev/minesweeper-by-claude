@@ -1,26 +1,28 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 const MinesweeperGame = () => {
-  const canvasRef = useRef(null);
-  const [gameState, setGameState] = useState(() => ({
-    grid: Array(10)
-      .fill()
-      .map(() => Array(10).fill(0)),
-    revealed: Array(10)
-      .fill()
-      .map(() => Array(10).fill(false)),
-    flagged: Array(10)
-      .fill()
-      .map(() => Array(10).fill(false)),
-    gameOver: false,
-    isFirstClick: true,
-    timer: 0,
-    bombsLeft: 15,
-  }));
-
   const GRID_SIZE = 10;
   const CELL_SIZE = 30;
   const MINE_COUNT = 15;
+
+  const [gameState, setGameState] = useState({
+    grid: Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(0)),
+    revealed: Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(false)),
+    flagged: Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(false)),
+    gameOver: false,
+    isFirstClick: true,
+    timer: 0,
+    bombsLeft: MINE_COUNT,
+    hasWon: false,
+  });
+
+  const canvasRef = useRef(null);
 
   useEffect(() => {
     let interval;
@@ -31,6 +33,12 @@ const MinesweeperGame = () => {
     }
     return () => clearInterval(interval);
   }, [gameState.isFirstClick, gameState.gameOver]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    drawGrid(ctx);
+  }, [gameState]);
 
   // Flag SVG
   const flagSvg = `
@@ -51,12 +59,6 @@ const MinesweeperGame = () => {
       <circle cx="12" cy="12" r="3" fill="white" />
     </svg>
   `;
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    drawGrid(ctx);
-  }, [gameState]);
 
   function initGrid(firstClickX, firstClickY) {
     const newGrid = Array(GRID_SIZE)
@@ -239,6 +241,35 @@ const MinesweeperGame = () => {
     return gameState.revealed;
   }
 
+  function checkWin(grid, revealed) {
+    for (let i = 0; i < GRID_SIZE; i++) {
+      for (let j = 0; j < GRID_SIZE; j++) {
+        if (grid[i][j] !== -1 && !revealed[i][j]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  function autoFlagRemainingCells(grid, revealed, flagged) {
+    const newFlagged = flagged.map((row) => [...row]);
+    let newBombsLeft = 0;
+
+    for (let i = 0; i < GRID_SIZE; i++) {
+      for (let j = 0; j < GRID_SIZE; j++) {
+        if (grid[i][j] === -1 && !revealed[i][j]) {
+          newFlagged[i][j] = true;
+        }
+        if (grid[i][j] === -1 && !newFlagged[i][j]) {
+          newBombsLeft++;
+        }
+      }
+    }
+
+    return { newFlagged, newBombsLeft };
+  }
+
   function handleClick(event) {
     event.preventDefault();
     if (gameState.gameOver) return;
@@ -288,24 +319,36 @@ const MinesweeperGame = () => {
               row.some((cell, j) => cell && prev.grid[i][j] === -1)
             )
           ) {
-            return { ...prev, revealed: newRevealed, gameOver: true };
+            return {
+              ...prev,
+              revealed: newRevealed,
+              gameOver: true,
+              hasWon: false,
+            };
           }
 
           const hasWon = checkWin(prev.grid, newRevealed);
 
-          return { ...prev, revealed: newRevealed, gameOver: hasWon };
+          if (hasWon) {
+            const { newFlagged, newBombsLeft } = autoFlagRemainingCells(
+              prev.grid,
+              newRevealed,
+              prev.flagged
+            );
+            return {
+              ...prev,
+              revealed: newRevealed,
+              flagged: newFlagged,
+              bombsLeft: newBombsLeft,
+              gameOver: true,
+              hasWon: true,
+            };
+          }
+
+          return { ...prev, revealed: newRevealed };
         }
       });
     }
-  }
-
-  function checkWin(grid, revealed) {
-    for (let i = 0; i < GRID_SIZE; i++) {
-      for (let j = 0; j < GRID_SIZE; j++) {
-        if (grid[i][j] !== -1 && !revealed[i][j]) return false;
-      }
-    }
-    return true;
   }
 
   return (
@@ -324,20 +367,14 @@ const MinesweeperGame = () => {
         onContextMenu={handleClick}
         className='border border-gray-300'
       />
-      {gameState.gameOver &&
-        gameState.revealed.some((row, i) =>
-          row.some((cell, j) => cell && gameState.grid[i][j] === -1)
-        ) && (
-          <div className='mt-4 text-xl font-bold text-red-500'>Game Over!</div>
-        )}
-      {gameState.gameOver &&
-        !gameState.revealed.some((row, i) =>
-          row.some((cell, j) => cell && gameState.grid[i][j] === -1)
-        ) && (
-          <div className='mt-4 text-xl font-bold text-green-500'>
-            Congratulations! You won!
-          </div>
-        )}
+      {gameState.gameOver && !gameState.hasWon && (
+        <div className='mt-4 text-xl font-bold text-red-500'>Game Over!</div>
+      )}
+      {gameState.gameOver && gameState.hasWon && (
+        <div className='mt-4 text-xl font-bold text-green-500'>
+          Congratulations! You won!
+        </div>
+      )}
     </div>
   );
 };
