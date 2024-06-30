@@ -37,7 +37,7 @@ const MinesweeperGame = () => {
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
-    drawGrid(ctx, gameState);
+    drawGrid(ctx, gameState, CELL_SIZE);
   }, [gameState]);
 
   function handleClick(event) {
@@ -68,7 +68,8 @@ const MinesweeperGame = () => {
             x,
             y,
             prev.revealed.map((row) => [...row]),
-            newGrid
+            newGrid,
+            prev.flagged
           );
           return {
             ...prev,
@@ -85,7 +86,8 @@ const MinesweeperGame = () => {
               x,
               y,
               prev.revealed.map((row) => [...row]),
-              prev.grid
+              prev.grid,
+              prev.flagged
             );
           }
 

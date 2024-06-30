@@ -1,5 +1,3 @@
-import { GRID_SIZE, CELL_SIZE } from './constants';
-
 // Flag SVG
 const flagSvg = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2">
@@ -20,32 +18,51 @@ const bombSvg = `
   </svg>
 `;
 
-export function drawGrid(ctx, gameState) {
-  ctx.clearRect(0, 0, GRID_SIZE * CELL_SIZE, GRID_SIZE * CELL_SIZE);
-  for (let i = 0; i < GRID_SIZE; i++) {
-    for (let j = 0; j < GRID_SIZE; j++) {
+export function drawGrid(ctx, gameState, cellSize) {
+  const gridSize = gameState.grid.length;
+  ctx.clearRect(0, 0, gridSize * cellSize, gridSize * cellSize);
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
       if (gameState.revealed[i][j]) {
         ctx.fillStyle = 'lightgray';
-        ctx.fillRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
 
         if (gameState.grid[i][j] === -1) {
-          drawSvgToCanvas(ctx, bombSvg, i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+          drawSvgToCanvas(
+            ctx,
+            bombSvg,
+            i * cellSize,
+            j * cellSize,
+            cellSize,
+            cellSize
+          );
         } else if (gameState.grid[i][j] > 0) {
           ctx.fillStyle = 'black';
           ctx.font = '20px Arial';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(gameState.grid[i][j], i * CELL_SIZE + CELL_SIZE / 2, j * CELL_SIZE + CELL_SIZE / 2);
+          ctx.fillText(
+            gameState.grid[i][j],
+            i * cellSize + cellSize / 2,
+            j * cellSize + cellSize / 2
+          );
         }
       } else {
         ctx.fillStyle = 'gray';
-        ctx.fillRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
       }
 
-      ctx.strokeRect(i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+      ctx.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
 
       if (gameState.flagged[i][j]) {
-        drawSvgToCanvas(ctx, flagSvg, i * CELL_SIZE, j * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+        drawSvgToCanvas(
+          ctx,
+          flagSvg,
+          i * cellSize,
+          j * cellSize,
+          cellSize,
+          cellSize
+        );
       }
     }
   }
