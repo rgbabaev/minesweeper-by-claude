@@ -6,9 +6,15 @@ import { revealCells, chordAction } from './cellActions';
 
 const MinesweeperGame = () => {
   const [gameState, setGameState] = useState({
-    grid: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0)),
-    revealed: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false)),
-    flagged: Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(false)),
+    grid: Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(0)),
+    revealed: Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(false)),
+    flagged: Array(GRID_SIZE)
+      .fill()
+      .map(() => Array(GRID_SIZE).fill(false)),
     gameOver: false,
     isFirstClick: true,
     timer: 0,
@@ -57,26 +63,61 @@ const MinesweeperGame = () => {
 
       setGameState((prev) => {
         if (prev.isFirstClick) {
-          const newGrid = initGrid(x, y);
-          const newRevealed = revealCells(x, y, prev.revealed.map((row) => [...row]), newGrid);
-          return { ...prev, grid: newGrid, revealed: newRevealed, isFirstClick: false };
+          const newGrid = initGrid(x, y, GRID_SIZE, MINE_COUNT);
+          const newRevealed = revealCells(
+            x,
+            y,
+            prev.revealed.map((row) => [...row]),
+            newGrid
+          );
+          return {
+            ...prev,
+            grid: newGrid,
+            revealed: newRevealed,
+            isFirstClick: false,
+          };
         } else {
           let newRevealed;
           if (prev.revealed[x][y]) {
             newRevealed = chordAction(x, y, prev);
           } else {
-            newRevealed = revealCells(x, y, prev.revealed.map((row) => [...row]), prev.grid);
+            newRevealed = revealCells(
+              x,
+              y,
+              prev.revealed.map((row) => [...row]),
+              prev.grid
+            );
           }
 
-          if (newRevealed.some((row, i) => row.some((cell, j) => cell && prev.grid[i][j] === -1))) {
-            return { ...prev, revealed: newRevealed, gameOver: true, hasWon: false };
+          if (
+            newRevealed.some((row, i) =>
+              row.some((cell, j) => cell && prev.grid[i][j] === -1)
+            )
+          ) {
+            return {
+              ...prev,
+              revealed: newRevealed,
+              gameOver: true,
+              hasWon: false,
+            };
           }
 
           const hasWon = checkWin(prev.grid, newRevealed);
 
           if (hasWon) {
-            const { newFlagged, newBombsLeft } = autoFlagRemainingCells(prev.grid, newRevealed, prev.flagged);
-            return { ...prev, revealed: newRevealed, flagged: newFlagged, bombsLeft: newBombsLeft, gameOver: true, hasWon: true };
+            const { newFlagged, newBombsLeft } = autoFlagRemainingCells(
+              prev.grid,
+              newRevealed,
+              prev.flagged
+            );
+            return {
+              ...prev,
+              revealed: newRevealed,
+              flagged: newFlagged,
+              bombsLeft: newBombsLeft,
+              gameOver: true,
+              hasWon: true,
+            };
           }
 
           return { ...prev, revealed: newRevealed };
@@ -88,7 +129,9 @@ const MinesweeperGame = () => {
   return (
     <div className='flex flex-col items-center'>
       <div className='mb-4 flex justify-between w-full'>
-        <div className='text-xl font-bold'>Bombs left: {gameState.bombsLeft}</div>
+        <div className='text-xl font-bold'>
+          Bombs left: {gameState.bombsLeft}
+        </div>
         <div className='text-xl font-bold'>Time: {gameState.timer}s</div>
       </div>
       <canvas
@@ -103,7 +146,9 @@ const MinesweeperGame = () => {
         <div className='mt-4 text-xl font-bold text-red-500'>Game Over!</div>
       )}
       {gameState.gameOver && gameState.hasWon && (
-        <div className='mt-4 text-xl font-bold text-green-500'>Congratulations! You won!</div>
+        <div className='mt-4 text-xl font-bold text-green-500'>
+          Congratulations! You won!
+        </div>
       )}
     </div>
   );
