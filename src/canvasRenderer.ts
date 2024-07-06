@@ -59,49 +59,98 @@ export function drawGrid(
 
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
+      const cellX = i * cellSize;
+      const cellY = j * cellSize;
+
       if (gameState.revealed[i][j]) {
-        ctx.fillStyle = 'lightgray';
-        ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
+        // Revealed cell
+        ctx.fillStyle = '#e0e0e0'; // Slightly lighter gray for revealed cells
+        ctx.fillRect(cellX, cellY, cellSize, cellSize);
+
+        // Add subtle border
+        ctx.strokeStyle = '#c0c0c0'; // Light gray border
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cellX, cellY, cellSize, cellSize);
 
         if (gameState.grid[i][j] === -1) {
-          drawSvgToCanvas(
-            ctx,
-            bombSvg,
-            i * cellSize,
-            j * cellSize,
-            cellSize,
-            cellSize
-          );
+          drawSvgToCanvas(ctx, bombSvg, cellX, cellY, cellSize, cellSize);
         } else if (gameState.grid[i][j] > 0) {
-          ctx.fillStyle = 'black';
-          ctx.font = `${cellSize / 2}px Arial`;
+          ctx.fillStyle = getNumberColor(gameState.grid[i][j]);
+          ctx.font = `bold ${cellSize / 2}px Arial`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(
             gameState.grid[i][j].toString(),
-            (i + 0.5) * cellSize,
-            (j + 0.5) * cellSize
+            cellX + cellSize / 2,
+            cellY + cellSize / 2
           );
         }
       } else {
-        ctx.fillStyle = 'gray';
-        ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize);
+        // Not revealed cell - draw in pseudo-3D style
+        // Main cell face
+        ctx.fillStyle = '#c0c0c0';
+        ctx.fillRect(cellX, cellY, cellSize, cellSize);
+
+        // Top edge
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(cellX, cellY);
+        ctx.lineTo(cellX + cellSize, cellY);
+        ctx.lineTo(cellX + cellSize - 2, cellY + 2);
+        ctx.lineTo(cellX + 2, cellY + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Left edge
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.moveTo(cellX, cellY);
+        ctx.lineTo(cellX, cellY + cellSize);
+        ctx.lineTo(cellX + 2, cellY + cellSize - 2);
+        ctx.lineTo(cellX + 2, cellY + 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Bottom edge
+        ctx.fillStyle = '#808080';
+        ctx.beginPath();
+        ctx.moveTo(cellX, cellY + cellSize);
+        ctx.lineTo(cellX + cellSize, cellY + cellSize);
+        ctx.lineTo(cellX + cellSize - 2, cellY + cellSize - 2);
+        ctx.lineTo(cellX + 2, cellY + cellSize - 2);
+        ctx.closePath();
+        ctx.fill();
+
+        // Right edge
+        ctx.fillStyle = '#808080';
+        ctx.beginPath();
+        ctx.moveTo(cellX + cellSize, cellY);
+        ctx.lineTo(cellX + cellSize, cellY + cellSize);
+        ctx.lineTo(cellX + cellSize - 2, cellY + cellSize - 2);
+        ctx.lineTo(cellX + cellSize - 2, cellY + 2);
+        ctx.closePath();
+        ctx.fill();
       }
 
-      ctx.strokeRect(i * cellSize, j * cellSize, cellSize, cellSize);
-
       if (gameState.flagged[i][j]) {
-        drawSvgToCanvas(
-          ctx,
-          flagSvg,
-          i * cellSize,
-          j * cellSize,
-          cellSize,
-          cellSize
-        );
+        drawSvgToCanvas(ctx, flagSvg, cellX, cellY, cellSize, cellSize);
       }
     }
   }
+}
+
+function getNumberColor(num: number): string {
+  const colors = [
+    '#0000FF', // 1: Blue
+    '#008000', // 2: Green
+    '#FF0000', // 3: Red
+    '#000080', // 4: Navy
+    '#800000', // 5: Maroon
+    '#008080', // 6: Teal
+    '#000000', // 7: Black
+    '#808080', // 8: Gray
+  ];
+  return colors[num - 1] || '#000000';
 }
 
 function drawSvgToCanvas(
