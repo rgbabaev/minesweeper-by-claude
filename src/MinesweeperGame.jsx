@@ -23,6 +23,23 @@ const MinesweeperGame = () => {
   });
 
   const canvasRef = useRef(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    const devicePixelRatio = window.devicePixelRatio || 1;
+    setScale(devicePixelRatio);
+
+    canvas.width = GRID_SIZE * CELL_SIZE * devicePixelRatio;
+    canvas.height = GRID_SIZE * CELL_SIZE * devicePixelRatio;
+    canvas.style.width = `${GRID_SIZE * CELL_SIZE}px`;
+    canvas.style.height = `${GRID_SIZE * CELL_SIZE}px`;
+
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+
+    drawGrid(ctx, gameState, CELL_SIZE);
+  }, [gameState]);
 
   useEffect(() => {
     let interval;
@@ -33,12 +50,6 @@ const MinesweeperGame = () => {
     }
     return () => clearInterval(interval);
   }, [gameState.isFirstClick, gameState.gameOver]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    drawGrid(ctx, gameState, CELL_SIZE);
-  }, [gameState]);
 
   function handleClick(event) {
     event.preventDefault();
@@ -138,8 +149,6 @@ const MinesweeperGame = () => {
       </div>
       <canvas
         ref={canvasRef}
-        width={GRID_SIZE * CELL_SIZE}
-        height={GRID_SIZE * CELL_SIZE}
         onClick={handleClick}
         onContextMenu={handleClick}
         className='border border-gray-300'

@@ -44,7 +44,13 @@ const bombSvg = `
 
 export function drawGrid(ctx, gameState, cellSize) {
   const gridSize = gameState.grid.length;
-  ctx.clearRect(0, 0, gridSize * cellSize, gridSize * cellSize);
+  const scale = ctx.getTransform().a;
+
+  ctx.save();
+  ctx.scale(1 / scale, 1 / scale);
+  ctx.clearRect(0, 0, gridSize * cellSize * scale, gridSize * cellSize * scale);
+  ctx.restore();
+
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       if (gameState.revealed[i][j]) {
@@ -62,13 +68,13 @@ export function drawGrid(ctx, gameState, cellSize) {
           );
         } else if (gameState.grid[i][j] > 0) {
           ctx.fillStyle = 'black';
-          ctx.font = '20px Arial';
+          ctx.font = `${cellSize / 2}px Arial`;
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(
             gameState.grid[i][j],
-            i * cellSize + cellSize / 2,
-            j * cellSize + cellSize / 2
+            (i + 0.5) * cellSize,
+            (j + 0.5) * cellSize
           );
         }
       } else {
