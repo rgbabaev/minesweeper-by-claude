@@ -1,5 +1,7 @@
+import { GameState } from './types';
+
 // Flag SVG
-const flagSvg = `
+const flagSvg: string = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
     <!-- Flag -->
     <rect x="30" y="20" width="5" height="60" fill="#8B4513" />
@@ -21,7 +23,7 @@ const flagSvg = `
 `;
 
 // Bomb SVG
-const bombSvg = `
+const bombSvg: string = `
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
     <!-- Classic Naval Mine -->
     <circle cx="50" cy="50" r="30" fill="#333333" />
@@ -42,9 +44,13 @@ const bombSvg = `
   </svg>
 `;
 
-export function drawGrid(ctx, gameState, cellSize) {
-  const gridSize = gameState.grid.length;
-  const scale = ctx.getTransform().a;
+export function drawGrid(
+  ctx: CanvasRenderingContext2D,
+  gameState: GameState,
+  cellSize: number
+): void {
+  const gridSize: number = gameState.grid.length;
+  const scale: number = ctx.getTransform().a;
 
   ctx.save();
   ctx.scale(1 / scale, 1 / scale);
@@ -72,7 +78,7 @@ export function drawGrid(ctx, gameState, cellSize) {
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
           ctx.fillText(
-            gameState.grid[i][j],
+            gameState.grid[i][j].toString(),
             (i + 0.5) * cellSize,
             (j + 0.5) * cellSize
           );
@@ -98,7 +104,14 @@ export function drawGrid(ctx, gameState, cellSize) {
   }
 }
 
-function drawSvgToCanvas(ctx, svgString, x, y, width, height) {
+function drawSvgToCanvas(
+  ctx: CanvasRenderingContext2D,
+  svgString: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number
+): void {
   const img = new Image();
   img.onload = () => {
     ctx.drawImage(img, x, y, width, height);

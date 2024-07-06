@@ -3,17 +3,18 @@ import { initGrid, checkWin, autoFlagRemainingCells } from './gameLogic';
 import { drawGrid } from './canvasRenderer';
 import { GRID_SIZE, CELL_SIZE, MINE_COUNT } from './constants';
 import { revealCells, chordAction } from './cellActions';
+import { GameState } from './types';
 
-const MinesweeperGame = () => {
-  const [gameState, setGameState] = useState({
+const MinesweeperGame: React.FC = () => {
+  const [gameState, setGameState] = useState<GameState>({
     grid: Array(GRID_SIZE)
-      .fill()
+      .fill(null)
       .map(() => Array(GRID_SIZE).fill(0)),
     revealed: Array(GRID_SIZE)
-      .fill()
+      .fill(null)
       .map(() => Array(GRID_SIZE).fill(false)),
     flagged: Array(GRID_SIZE)
-      .fill()
+      .fill(null)
       .map(() => Array(GRID_SIZE).fill(false)),
     gameOver: false,
     isFirstClick: true,
@@ -22,14 +23,15 @@ const MinesweeperGame = () => {
     hasWon: false,
   });
 
-  const canvasRef = useRef(null);
-  const [scale, setScale] = useState(1);
-
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
     const devicePixelRatio = window.devicePixelRatio || 1;
-    setScale(devicePixelRatio);
 
     canvas.width = GRID_SIZE * CELL_SIZE * devicePixelRatio;
     canvas.height = GRID_SIZE * CELL_SIZE * devicePixelRatio;
@@ -42,20 +44,23 @@ const MinesweeperGame = () => {
   }, [gameState]);
 
   useEffect(() => {
-    let interval;
+    let interval: number | undefined;
     if (!gameState.isFirstClick && !gameState.gameOver) {
-      interval = setInterval(() => {
+      interval = window.setInterval(() => {
         setGameState((prev) => ({ ...prev, timer: prev.timer + 1 }));
       }, 1000);
     }
     return () => clearInterval(interval);
   }, [gameState.isFirstClick, gameState.gameOver]);
 
-  function handleClick(event) {
+  function handleClick(event: React.MouseEvent<HTMLCanvasElement>): void {
     event.preventDefault();
     if (gameState.gameOver) return;
 
-    const rect = canvasRef.current.getBoundingClientRect();
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
     const x = Math.floor((event.clientX - rect.left) / CELL_SIZE);
     const y = Math.floor((event.clientY - rect.top) / CELL_SIZE);
 
@@ -89,7 +94,7 @@ const MinesweeperGame = () => {
             isFirstClick: false,
           };
         } else {
-          let newRevealed;
+          let newRevealed: boolean[][];
           if (prev.revealed[x][y]) {
             newRevealed = chordAction(x, y, prev);
           } else {

@@ -1,10 +1,12 @@
-export function revealCells(x, y, revealed, grid, flagged) {
-  const gridSize = grid.length;
-  const newRevealed = revealed.map((row) => [...row]);
-  const stack = [[x, y]];
+import { GameState } from './types';
+
+export function revealCells(x: number, y: number, revealed: boolean[][], grid: number[][], flagged: boolean[][]): boolean[][] {
+  const gridSize: number = grid.length;
+  const newRevealed: boolean[][] = revealed.map((row) => [...row]);
+  const stack: [number, number][] = [[x, y]];
 
   while (stack.length > 0) {
-    const [currX, currY] = stack.pop();
+    const [currX, currY] = stack.pop()!;
 
     if (
       currX < 0 ||
@@ -30,12 +32,12 @@ export function revealCells(x, y, revealed, grid, flagged) {
   return newRevealed;
 }
 
-export function chordAction(x, y, gameState) {
-  const cell = gameState.grid[x][y];
-  const gridSize = gameState.grid.length;
+export function chordAction(x: number, y: number, gameState: GameState): boolean[][] {
+  const cell: number = gameState.grid[x][y];
+  const gridSize: number = gameState.grid.length;
   if (cell <= 0 || !gameState.revealed[x][y]) return gameState.revealed;
 
-  let flagCount = 0;
+  let flagCount: number = 0;
   for (let i = -1; i <= 1; i++) {
     for (let j = -1; j <= 1; j++) {
       if (x + i >= 0 && x + i < gridSize && y + j >= 0 && y + j < gridSize) {
@@ -45,7 +47,7 @@ export function chordAction(x, y, gameState) {
   }
 
   if (flagCount === cell) {
-    let newRevealed = gameState.revealed.map((row) => [...row]);
+    let newRevealed: boolean[][] = gameState.revealed.map((row) => [...row]);
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
         if (x + i >= 0 && x + i < gridSize && y + j >= 0 && y + j < gridSize) {
